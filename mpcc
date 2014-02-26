@@ -1,11 +1,30 @@
 #!/usr/bin/env ruby
+# encoding: UTF-8
 
 require 'optparse'
 require 'open3'
 
-num_tracks = 5
-library = `mpc listall`.split "\n"
+ops = {}
+prog_name = File.basename $PROGRAM_NAME
+ARGV << '-h' unless ARGV.any?
+OptionParser.new do |opts|
+  opts.banner  = "Usage: #{prog_name} add [arguments]"
+  opts.on('-h', '--help', 'Display this screen') do
+    puts opts
+    exit
+  end
+  opts.on('-r', '--random N', Float, 'Select N random tracks') do |n|
+    puts 'a'
+    ops[:random] = n.to_i
+  end
+  opts.on_tail "'#{prog_name} add' without args will add all tracks"
+end.parse!
+
+# Action #
+##########
+selection = `mpc listall`.split "\n"
+selection = selection.sample ops[:random] if ops[:random]
 
 Open3.pipeline_w('mpc add') do |stdin|
-  stdin.puts library.sample(num_tracks).join "\n"
+  stdin.puts selection.join "\n"
 end
