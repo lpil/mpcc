@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'open3'
+
+num_tracks = 5
+library = `mpc listall`.split "\n"
+
+Open3.pipeline_w('mpc add') do |stdin|
+  stdin.puts library.sample(num_tracks).join "\n"
+end
