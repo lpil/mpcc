@@ -20,6 +20,37 @@ OptionParser.new do |opts|
   opts.on_tail "'#{prog_name} add' without args will add all tracks"
 end.parse!
 
+# Gets library list from mpd and parses into array of tracks
+class MPDLibrary < Array
+  def initialize
+    add_mpd_library
+  end
+
+  private
+
+  def add_mpd_library
+    tsv_order = [
+      '%artist%', '%album%', '%albumartist%', '%comment%', '%composer%',
+      '%date%', '%disc%', '%genre%', '%performer%', '%title%', '%track%',
+      '%time%', '%file%', '%position%'
+    ]
+    `mpc listall -f "#{tsv_order.join '\t'}"`.split("\n").each do |row|
+      row_vals = row.split("\t")
+      # Skip over rows that are dirs, not tracks
+      push MPDTrack.new row_vals, tsv_order if row_vals.size == tsv_order.size
+    end
+  end
+end
+
+# Parses mpd playlist output row
+class MPDTrack < Hash
+  def initialize(row_vals, tsv_order)
+    tsv_order.each_with_index do |a, i|
+      self[a[1..-2].to_sym] = row_vals[i]
+    end
+  end
+end
+
 # Action #
 ##########
 selection = `mpc listall`.split "\n"
